@@ -1,6 +1,7 @@
 /**
  * The applications list: filters by kind and status, search, sorting, an
- * inline status select and the "New application" dialog.
+ * inline status select and the "New application" dialog. The same rows can
+ * also be shown as a board with one column per status (P1).
  *
  * This is a Client Component. Filtering, searching and sorting are done by
  * the server: each change of the controls becomes a new input to the
@@ -13,11 +14,13 @@ import { keepPreviousData } from "@tanstack/react-query";
 import {
   ClipboardList,
   FileText,
+  List,
   ListFilter,
   Mail,
   Plus,
   Search,
   SearchX,
+  SquareKanban,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -62,6 +65,7 @@ import { isDeadlineOpen } from "@/utils/deadlines";
 import { KIND_LABELS, PRIORITY_LABELS, statusLabel } from "@/utils/labels";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { useDebouncedValue } from "@/utils/use-debounced-value";
+import { ApplicationBoard } from "./application-board";
 
 type Application = RouterOutputs["applications"]["list"][number];
 // The API checks these against its own list: a value it does not know would
@@ -71,13 +75,25 @@ type Sort = (typeof SORTS)[number];
 
 const ALL_KINDS = "all";
 
+/** The two ways of showing the same rows. */
+const VIEWS = ["list", "board"] as const;
+type View = (typeof VIEWS)[number];
+
 const SORT_LABELS: Record<Sort, string> = {
   deadline: "Deadline",
   updated: "Recently updated",
   organization: "Name (A to Z)",
 };
 
-export default function ApplicationsPage() {
+type ApplicationsPageProps = {
+  /** From the `?view=` part of the URL, read by the server component. */
+  initialView: View;
+};
+
+export default function ApplicationsPage({
+  initialView,
+}: ApplicationsPageProps) {
+  const [view, setView] = useState<View>(initialView);
   const [kind, setKind] = useState<Kind | typeof ALL_KINDS>(ALL_KINDS);
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [search, setSearch] = useState("");
@@ -114,6 +130,17 @@ export default function ApplicationsPage() {
     setSearch("");
   }
 
+  function changeView(next: View) {
+    setView(next);
+    // Keep the view in the URL, so a reload or a shared link opens the same
+    // one. `replaceState` does not add a step to the Back button.
+    window.history.replaceState(
+      null,
+      "",
+      next === "board" ? "?view=board" : window.location.pathname,
+    );
+  }
+
   return (
     <>
       <PageHeader
@@ -126,19 +153,37 @@ export default function ApplicationsPage() {
       </PageHeader>
 
       <div className="mb-4 flex flex-col gap-3">
-        <Tabs
-          value={kind}
-          onValueChange={(value) => {
-            const parsed = Kind.safeParse(value);
-            setKind(parsed.success ? parsed.data : ALL_KINDS);
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value={ALL_KINDS}>All</TabsTrigger>
-            <TabsTrigger value="grad_school">Grad school</TabsTrigger>
-            <TabsTrigger value="internship">Internships</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Tabs
+            value={kind}
+            onValueChange={(value) => {
+              const parsed = Kind.safeParse(value);
+              setKind(parsed.success ? parsed.data : ALL_KINDS);
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value={ALL_KINDS}>All</TabsTrigger>
+              <TabsTrigger value="grad_school">Grad school</TabsTrigger>
+              <TabsTrigger value="internship">Internships</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Tabs
+            value={view}
+            onValueChange={(value) => {
+              const next = VIEWS.find((option) => option === value);
+              if (next) changeView(next);
+            }}
+          >
+            <TabsList aria-label="View">
+              <TabsTrigger value="list" className="gap-1.5">
+                <List className="h-4 w-4" aria-hidden /> List
+              </TabsTrigger>
+              <TabsTrigger value="board" className="gap-1.5">
+                <SquareKanban className="h-4 w-4" aria-hidden /> Board
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-0 flex-1 basis-56">
@@ -217,8 +262,18 @@ export default function ApplicationsPage() {
             isPlaceholderData && "opacity-60",
           )}
         >
-          <ApplicationTable applications={applications} />
-          <ApplicationCards applications={applications} />
+          {view === "board" ? (
+            <ApplicationBoard
+              applications={applications}
+              kind={kind === ALL_KINDS ? undefined : kind}
+              statuses={statuses}
+            />
+          ) : (
+            <>
+              <ApplicationTable applications={applications} />
+              <ApplicationCards applications={applications} />
+            </>
+          )}
         </div>
       )}
 
