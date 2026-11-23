@@ -7,10 +7,11 @@
  * (`NOT_FOUND`).
  */
 
+import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import type { z } from "zod";
-import { notImplemented } from "@/server/api/not-implemented";
+import { siteOrigin } from "@/server/api/site-origin";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { recommendersTable } from "@/server/db/schema";
@@ -197,5 +198,29 @@ export const recommendersApiRouter = createTRPCRouter({
   setSharing: protectedProcedure
     .input(RecommenderSharing)
     .output(SharingState)
-    .mutation(() => notImplemented("recommenders.setSharing")),
+    .mutation(async ({ ctx, input }) => {
+      const [recommender] = await db
+        .update(recommendersTable)
+        .set({
+          shareEnabled: input.enabled,
+          // A new secret makes the old link stop working at once.
+          ...(input.regenerateToken && { shareToken: randomUUID() }),
+        })
+        .where(ownedBy(ctx.subject.id, input.id))
+        .returning({
+          shareEnabled: recommendersTable.shareEnabled,
+          shareToken: recommendersTable.shareToken,
+        });
+
+      if (!recommender) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // The secret leaves the server only here, as part of the link, and
+      // only while the link works. `Recommender` never includes it.
+      return {
+        shareEnabled: recommender.shareEnabled,
+        shareUrl: recommender.shareEnabled
+          ? `${await siteOrigin()}/r/${recommender.shareToken}`
+          : null,
+      };
+    }),
 });
