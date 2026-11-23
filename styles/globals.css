@@ -116,6 +116,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* By default a grid column is at least as wide as its widest piece of
+     unbreakable content, so one long word or one truncated line could push
+     a whole page off a phone screen. Letting grid items shrink keeps every
+     column inside its container. A `min-w-*` class on an item still wins,
+     because utilities come after this layer. */
+  .grid > * {
+    min-width: 0;
+  }
 }
 
 @layer utilities {

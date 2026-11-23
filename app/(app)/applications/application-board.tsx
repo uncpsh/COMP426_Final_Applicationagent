@@ -245,11 +245,11 @@ function CardBody({
             href={`/applications/${application.id}`}
             // Otherwise the browser would start dragging the link itself.
             draggable={false}
-            className="font-medium break-words underline-offset-4 hover:underline"
+            className="font-medium wrap-anywhere underline-offset-4 hover:underline"
           >
             {application.organization}
           </Link>
-          <p className="text-muted-foreground text-xs break-words">
+          <p className="text-muted-foreground text-xs wrap-anywhere">
             {subtitle}
           </p>
         </div>

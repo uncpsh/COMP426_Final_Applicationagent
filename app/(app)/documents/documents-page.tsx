@@ -160,7 +160,7 @@ function DocumentCard({ document }: { document: DocSummary }) {
       <div className="flex items-start justify-between gap-3">
         <Link
           href={`/documents/${document.id}`}
-          className="min-w-0 font-medium break-words underline-offset-4 hover:underline"
+          className="min-w-0 font-medium wrap-anywhere underline-offset-4 hover:underline"
         >
           {document.title}
         </Link>

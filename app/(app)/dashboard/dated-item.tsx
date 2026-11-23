@@ -33,7 +33,7 @@ export function DatedItem({ item, isOpen = true }: DatedItemProps) {
         <div className="min-w-0">
           <Link
             href={`/applications/${item.applicationId}`}
-            className="font-medium break-words underline-offset-4 hover:underline"
+            className="font-medium wrap-anywhere underline-offset-4 hover:underline"
           >
             {item.title}
           </Link>

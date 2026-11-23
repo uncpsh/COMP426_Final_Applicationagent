@@ -21,6 +21,20 @@ npx drizzle-kit generate --name=<what_changed>  # writes a migration to supabase
 npx drizzle-kit migrate                         # applies it to the database
 ```
 
+## Demo data
+
+`npm run seed` creates one demo account and fills it with sample data: 12 applications in every status, 3 recommenders with letters in every status, and 3 documents with 9 versions attached to the applications. Every date is counted from the moment it runs, so run it again shortly before a demo.
+
+1. Copy `.env.local.example` to `.env.local` and fill it in: the Supabase **secret** (service role) key, and the email and password you want for the demo account.
+2. Run it (needs Node 22.18 or newer):
+
+   ```bash
+   npm run seed -- --dry-run   # only prints what it would create
+   npm run seed
+   ```
+
+Running it again resets the demo account to the sample data. It never touches an account it did not create. The secret key bypasses every access rule: it belongs only in `.env.local` on your own machine, never in the app, in Vercel or in Git.
+
 ## Project Structure
 
 | Path                                                        | What it is                                                                                                                                                                                  |
@@ -30,6 +44,7 @@ npx drizzle-kit migrate                         # applies it to the database
 | `app/login/`, `app/signup/`                                 | Public auth pages: a server `page.tsx` plus its client form                                                                                                                                 |
 | `app/(app)/`                                                | Every page that needs a signed-in user. `layout.tsx` is the app shell (header, navigation, user menu). `/applications` has a list and a board view, `/dashboard` an overview and a calendar |
 | `app/r/[token]/`                                            | The recommender portal: the one public page inside the product, opened with the secret link from a recommender's page                                                                       |
+| `app/not-found.tsx`, `app/error.tsx`                        | The 404 page, and the fallback shown when a page fails unexpectedly                                                                                                                         |
 | `app/api/trpc/[trpc]/route.ts`                              | tRPC API endpoint                                                                                                                                                                           |
 | `server/api/trpc.ts`                                        | tRPC context, `publicProcedure` and `protectedProcedure`                                                                                                                                    |
 | `server/api/root.ts`                                        | The app router, which combines the feature routers                                                                                                                                          |
@@ -52,6 +67,7 @@ npx drizzle-kit migrate                         # applies it to the database
 | `components/recommenders/`                                  | Recommender create/edit dialog, and the portal link card (turn on, copy, replace, turn off)                                                                                                 |
 | `components/documents/`                                     | Document pieces: create/edit dialog, upload form (two-step upload), attach dialog, download hook                                                                                            |
 | `components/`                                               | Shared pieces: `PageHeader`, `FormField`, `DeadlineText`, `EmptyState`, `ErrorState`, `ConfirmDialog`, `Brand`                                                                              |
+| `scripts/seed.mts`                                          | Local seed script for the demo account (the only code that uses the service-role key)                                                                                                       |
 | `proxy.ts`                                                  | Refreshes the Supabase session on each request                                                                                                                                              |
 
 ## Working on this repo

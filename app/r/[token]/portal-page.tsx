@@ -77,7 +77,7 @@ export default function PortalPage({ token }: PortalPageProps) {
           )
         ) : (
           <>
-            <h1 className="text-2xl font-bold tracking-tight break-words">
+            <h1 className="text-2xl font-bold tracking-tight wrap-anywhere">
               Letters for {portal.applicantName}
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -135,8 +135,8 @@ function PortalLetter({ token, letter }: { token: string; letter: Letter }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl border p-4 text-sm">
       <div className="min-w-0 flex-1 basis-48">
-        <p className="font-medium break-words">{letter.organization}</p>
-        <p className="text-muted-foreground text-xs break-words">
+        <p className="font-medium wrap-anywhere">{letter.organization}</p>
+        <p className="text-muted-foreground text-xs wrap-anywhere">
           {letter.position}
         </p>
       </div>

@@ -87,10 +87,10 @@ export default function ApplicationPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight break-words">
+          <h1 className="text-2xl font-bold tracking-tight wrap-anywhere">
             {application.organization}
           </h1>
-          <p className="text-muted-foreground mt-1 break-words">
+          <p className="text-muted-foreground mt-1 wrap-anywhere">
             {[application.position, application.term]
               .filter(Boolean)
               .join(" · ")}
@@ -176,7 +176,7 @@ export default function ApplicationPage({
               )}
               {application.notes && (
                 <Detail label="Notes">
-                  <p className="break-words whitespace-pre-wrap">
+                  <p className="wrap-anywhere whitespace-pre-wrap">
                     {application.notes}
                   </p>
                 </Detail>

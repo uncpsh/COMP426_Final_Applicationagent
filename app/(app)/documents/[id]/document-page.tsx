@@ -141,7 +141,7 @@ export default function DocumentPage({ user, documentId }: DocumentPageProps) {
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight break-words">
+          <h1 className="text-2xl font-bold tracking-tight wrap-anywhere">
             {document.title}
           </h1>
           <div className="mt-3">
@@ -287,7 +287,7 @@ function VersionItem({
       </div>
 
       {version.changeNote && (
-        <p className="mt-2 break-words">{version.changeNote}</p>
+        <p className="mt-2 wrap-anywhere">{version.changeNote}</p>
       )}
 
       <div className="mt-2 border-t pt-2 text-xs">
