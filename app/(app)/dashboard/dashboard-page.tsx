@@ -1,18 +1,20 @@
 /**
  * The dashboard: what is due soon, applications by status, letters still
- * owed per recommender, and fees paid.
+ * owed per recommender, and fees paid. A second view shows the same dates
+ * as a calendar (P1).
  *
- * This is a Client Component. Everything it shows comes from one tRPC query,
- * `dashboard.summary`, so the page loads with a single request.
+ * This is a Client Component. Everything the overview shows comes from one
+ * tRPC query, `dashboard.summary`, so the page loads with a single request.
  */
 
 "use client";
 
-import { ClipboardList, Mail, PartyPopper, Plus } from "lucide-react";
+import { CalendarDays, ClipboardList, PartyPopper, Plus } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useState } from "react";
 
 import { STATUS_STYLES } from "@/components/applications/status-styles";
-import { DeadlineText } from "@/components/deadline-text";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
@@ -25,15 +27,81 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { APPLICATION_STATUSES } from "@/server/models/enums";
 import { cn } from "@/utils/cn";
 import { urgencyOf } from "@/utils/deadlines";
 import { formatCents, statusLabel } from "@/utils/labels";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
+import { DatedItem } from "./dated-item";
 
 type Summary = RouterOutputs["dashboard"]["summary"];
 
-export default function DashboardPage() {
+/** The two ways of looking at what is due. */
+const VIEWS = ["overview", "calendar"] as const;
+type View = (typeof VIEWS)[number];
+
+// The calendar puts each date on a day of the user's own time zone, which
+// the server does not know. Rendering it only in the browser avoids showing
+// a month laid out for the server's time zone first.
+const CalendarView = dynamic(() => import("./calendar-view"), {
+  ssr: false,
+  loading: () => (
+    <Skeleton
+      className="h-96 w-full rounded-xl"
+      aria-busy="true"
+      aria-label="Loading calendar"
+    />
+  ),
+});
+
+type DashboardPageProps = {
+  /** From the `?view=` part of the URL, read by the server component. */
+  initialView: View;
+};
+
+export default function DashboardPage({ initialView }: DashboardPageProps) {
+  const [view, setView] = useState<View>(initialView);
+
+  function changeView(next: View) {
+    setView(next);
+    // Keep the view in the URL, so a reload or a shared link opens the same
+    // one. `replaceState` does not add a step to the Back button.
+    window.history.replaceState(
+      null,
+      "",
+      next === "calendar" ? "?view=calendar" : window.location.pathname,
+    );
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Everything due soon, at a glance."
+      >
+        <Tabs
+          value={view}
+          onValueChange={(value) => {
+            const next = VIEWS.find((option) => option === value);
+            if (next) changeView(next);
+          }}
+        >
+          <TabsList aria-label="View">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5">
+              <CalendarDays className="h-4 w-4" aria-hidden /> Calendar
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </PageHeader>
+
+      {view === "calendar" ? <CalendarView /> : <Overview />}
+    </>
+  );
+}
+
+function Overview() {
   const {
     data: summary,
     isPending,
@@ -43,11 +111,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Everything due soon, at a glance."
-      />
-
       {isPending ? (
         <DashboardSkeleton />
       ) : isError ? (
@@ -172,38 +235,11 @@ function DueSoon({ upcoming }: { upcoming: Summary["upcoming"] }) {
           </div>
         ) : (
           <ul className="grid gap-2">
-            {upcoming.map((item) => {
-              const Icon = item.type === "letter" ? Mail : ClipboardList;
-              return (
-                // A letter and its application can be due together, so the
-                // key needs the type as well as the id.
-                <li
-                  key={`${item.type}-${item.id}`}
-                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border p-3 text-sm"
-                >
-                  <div className="flex min-w-0 flex-1 basis-48 items-start gap-3">
-                    <Icon
-                      className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0"
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
-                      <Link
-                        href={`/applications/${item.applicationId}`}
-                        className="font-medium break-words underline-offset-4 hover:underline"
-                      >
-                        {item.title}
-                      </Link>
-                      <p className="text-muted-foreground text-xs">
-                        {item.type === "letter"
-                          ? "Recommendation letter"
-                          : "Application deadline"}
-                      </p>
-                    </div>
-                  </div>
-                  <DeadlineText dueAt={item.dueAt} className="sm:text-right" />
-                </li>
-              );
-            })}
+            {upcoming.map((item) => (
+              // A letter and its application can be due together, so the
+              // key needs the type as well as the id.
+              <DatedItem key={`${item.type}-${item.id}`} item={item} />
+            ))}
           </ul>
         )}
       </CardContent>

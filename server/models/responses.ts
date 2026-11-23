@@ -246,6 +246,17 @@ export const DetachedDocument = z.object({
 /* dashboard                                                           */
 /* ------------------------------------------------------------------ */
 
+/** Defines one dated item: an application's deadline or a letter's due date. */
+const DatedItem = z.object({
+  type: z.enum(["application", "letter"]),
+  /** The application's id or the letter's id, depending on `type`. */
+  id: Id,
+  /** Where the item links to: a letter belongs to an application. */
+  applicationId: Id,
+  title: z.string(),
+  dueAt: Timestamp,
+});
+
 /** Defines everything the dashboard shows, loaded in one request. */
 export const DashboardSummary = z.object({
   countsByStatus: z.object({
@@ -259,20 +270,21 @@ export const DashboardSummary = z.object({
     withdrawn: Count,
   }),
   /** Overdue items plus the next 30 days, sorted by due date. */
-  upcoming: z
-    .object({
-      type: z.enum(["application", "letter"]),
-      id: Id,
-      applicationId: Id,
-      title: z.string(),
-      dueAt: Timestamp,
-    })
-    .array(),
+  upcoming: DatedItem.array(),
   outstandingLetters: z
     .object({ recommenderId: Id, name: z.string(), pending: Count })
     .array(),
   /** Fees of the applications that have been submitted. */
   totalFeesCents: Count,
+});
+
+/** Defines one entry of the calendar (P1). */
+export const CalendarEvent = DatedItem.extend({
+  /**
+   * False once the item is done: the application was sent, or the letter
+   * was submitted. The calendar still shows it, without the urgency.
+   */
+  isOpen: z.boolean(),
 });
 
 /* ------------------------------------------------------------------ */
