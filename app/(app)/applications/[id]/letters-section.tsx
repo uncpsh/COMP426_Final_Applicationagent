@@ -1,13 +1,20 @@
 /**
- * The "Recommendation letters" section of the application page.
+ * The "Recommendation letters" section of the application page: assign a
+ * recommender, and change each letter's status, due date and notes.
  *
- * Placeholder for step 4.3: it already lists the letters that
- * `applications.byId` returns, read-only. Assigning a recommender and
- * changing a letter's status and due date are added in Phase 4.
+ * The letters come from `applications.byId` (passed in as a prop); every
+ * change goes through the `recommendations` router and then reloads it.
  */
 
-import { DeadlineText } from "@/components/deadline-text";
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { Plus } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { AssignRecommenderDialog } from "@/components/letters/assign-recommender-dialog";
+import { LetterItem } from "@/components/letters/letter-item";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LETTER_STATUS_LABELS } from "@/utils/labels";
 import type { RouterOutputs } from "@/utils/trpc/api";
 
 type LettersSectionProps = {
@@ -23,58 +29,65 @@ type LettersSectionProps = {
 };
 
 export function LettersSection({ application }: LettersSectionProps) {
+  const [isAssigning, setIsAssigning] = useState(false);
   const { letters } = application;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recommendation letters</CardTitle>
-        <CardDescription>
-          Who is writing for this application, and where each letter stands.
-        </CardDescription>
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+        <div className="grid gap-1.5">
+          <CardTitle>Recommendation letters</CardTitle>
+          <CardDescription>
+            Who is writing for this application, and where each letter stands.
+          </CardDescription>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setIsAssigning(true)}
+        >
+          <Plus aria-hidden /> Assign
+        </Button>
       </CardHeader>
       <CardContent>
         {letters.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-            No recommenders assigned yet. Assigning recommenders is coming in
-            the next phase.
+            No recommenders assigned yet. Assign one to start tracking their
+            letter.
           </p>
         ) : (
           <ul className="grid gap-2">
             {letters.map((letter) => (
-              <li
+              <LetterItem
                 key={letter.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm"
+                letter={letter}
+                applicationDeadlineAt={application.deadlineAt}
+                subject={`${letter.recommender.name} · ${application.organization}`}
               >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">
-                    {letter.recommender.name}
+                <Link
+                  href={`/recommenders/${letter.recommender.id}`}
+                  className="font-medium underline-offset-4 hover:underline"
+                >
+                  {letter.recommender.name}
+                </Link>
+                {letter.recommender.title && (
+                  <p className="text-muted-foreground truncate text-xs">
+                    {letter.recommender.title}
                   </p>
-                  {letter.recommender.title && (
-                    <p className="text-muted-foreground truncate text-xs">
-                      {letter.recommender.title}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* A letter without its own due date follows the application's deadline. */}
-                  <DeadlineText
-                    dueAt={letter.dueAt ?? application.deadlineAt}
-                    isOpen={
-                      letter.status !== "submitted" &&
-                      letter.status !== "declined"
-                    }
-                    className="text-right text-xs"
-                  />
-                  <Badge variant="secondary">
-                    {LETTER_STATUS_LABELS[letter.status]}
-                  </Badge>
-                </div>
-              </li>
+                )}
+              </LetterItem>
             ))}
           </ul>
         )}
       </CardContent>
+
+      <AssignRecommenderDialog
+        open={isAssigning}
+        onOpenChange={setIsAssigning}
+        application={application}
+        assignedRecommenderIds={letters.map((letter) => letter.recommenderId)}
+      />
     </Card>
   );
 }
