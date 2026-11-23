@@ -121,9 +121,14 @@ export const recommendersApiRouter = createTRPCRouter({
 
       if (!recommender) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // Most urgent first; letters without any date go last.
+      // Letters still owed come before finished ones (submitted or
+      // declined); a letter handed in weeks ago has the earliest date but is
+      // the least urgent. Within each group the earliest date comes first,
+      // and letters without any date go last.
       recommender.letters.sort(
         (a, b) =>
+          Number(isLetterOutstanding(b.status)) -
+            Number(isLetterOutstanding(a.status)) ||
           compareDueDates(
             letterDueAt(a.dueAt, a.application.deadlineAt),
             letterDueAt(b.dueAt, b.application.deadlineAt),
