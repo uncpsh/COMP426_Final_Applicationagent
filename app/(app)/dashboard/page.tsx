@@ -1,30 +1,19 @@
 /**
- * Route for `/dashboard`. Requires a signed-in user.
+ * Route for the dashboard (`/dashboard`).
  *
- * Placeholder: the real page is built in Phase 6 of the build plan.
+ * This Server Component checks that the user is signed in (redirecting to
+ * the login page if not) and renders the interactive dashboard
+ * (`dashboard-page.tsx`), which loads its data through tRPC.
  */
 
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/components/coming-soon";
-import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/utils/supabase/auth";
+import DashboardPage from "./dashboard-page";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function Page() {
   await requireUser();
-
-  return (
-    <>
-      <PageHeader
-        title="Dashboard"
-        description="Everything due soon, at a glance."
-      />
-      <ComingSoon>
-        Upcoming deadlines, applications by status, letters outstanding per
-        recommender and total fees will appear here.
-      </ComingSoon>
-    </>
-  );
+  return <DashboardPage />;
 }

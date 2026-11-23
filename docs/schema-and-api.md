@@ -6,7 +6,7 @@ COMP 426 final project. AppTrail is one place for students to track grad school 
 - **Live app:** https://comp426-final-applicationagent.vercel.app
 - **Source of truth:** tables in `server/db/schema.ts`, relations in `server/db/relations.ts`, API inputs in `server/models/inputs.ts`, API outputs in `server/models/responses.ts`, routers in `server/api/routers/`.
 
-> **Status on 11/23.** The database below is created and live. Every procedure below exists with its final input and output validation. The procedure bodies are being implemented feature by feature; until then a procedure answers `NOT_IMPLEMENTED`.
+> **Status on 11/23.** The database below is created and live, and every procedure below exists with its final input and output validation. All P0 procedures are implemented. The three P1 procedures of the recommender portal (`recommenders.setSharing`, `portal.byToken`, `portal.markSubmitted`) still answer `NOT_IMPLEMENTED`.
 
 ---
 
