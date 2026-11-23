@@ -44,13 +44,13 @@ erDiagram
 
 ### 1.3 Enums
 
-| Enum | Values |
-| --- | --- |
-| `application_kind` | `grad_school`, `internship` |
-| `application_status` | `researching`, `preparing`, `submitted`, `interviewing`, `offer`, `waitlisted`, `rejected`, `withdrawn` |
-| `application_priority` | `reach`, `target`, `safety` |
-| `letter_status` | `planned`, `requested`, `confirmed`, `submitted`, `declined` |
-| `document_type` | `sop`, `personal_statement`, `cv`, `resume`, `cover_letter`, `writing_sample`, `other` |
+| Enum                   | Values                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `application_kind`     | `grad_school`, `internship`                                                                             |
+| `application_status`   | `researching`, `preparing`, `submitted`, `interviewing`, `offer`, `waitlisted`, `rejected`, `withdrawn` |
+| `application_priority` | `reach`, `target`, `safety`                                                                             |
+| `letter_status`        | `planned`, `requested`, `confirmed`, `submitted`, `declined`                                            |
+| `document_type`        | `sop`, `personal_statement`, `cv`, `resume`, `cover_letter`, `writing_sample`, `other`                  |
 
 ### 1.4 Tables
 
@@ -60,52 +60,52 @@ There are 7 tables in the `public` schema.
 
 Created automatically by a database trigger when Supabase Auth inserts a row into `auth.users` (see 1.6).
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | — | **PK**. **FK** → `auth.users.id`, on delete cascade |
-| `display_name` | `text` | no | — | From the sign-up form |
-| `created_at` | `timestamptz` | no | `now()` | |
+| Column         | Type          | Null | Default | Key / notes                                         |
+| -------------- | ------------- | ---- | ------- | --------------------------------------------------- |
+| `id`           | `uuid`        | no   | —       | **PK**. **FK** → `auth.users.id`, on delete cascade |
+| `display_name` | `text`        | no   | —       | From the sign-up form                               |
+| `created_at`   | `timestamptz` | no   | `now()` |                                                     |
 
 #### `applications` — one grad school or internship application
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | `gen_random_uuid()` | **PK** |
-| `user_id` | `uuid` | no | — | **FK** → `profiles.id`, on delete cascade |
-| `kind` | `application_kind` | no | — | |
-| `organization` | `text` | no | — | School or company |
-| `position` | `text` | no | — | Program name or role title |
-| `term` | `text` | yes | — | For example "Fall 2027" |
-| `status` | `application_status` | no | `'researching'` | |
-| `priority` | `application_priority` | yes | — | |
-| `deadline_at` | `timestamptz` | yes | — | Null for rolling deadlines |
-| `submitted_at` | `timestamptz` | yes | — | Set the first time the status becomes `submitted` |
-| `portal_url` | `text` | yes | — | |
-| `location` | `text` | yes | — | Mostly for internships |
-| `application_fee_cents` | `integer` | yes | — | Money is stored in cents |
-| `notes` | `text` | yes | — | |
-| `created_at` | `timestamptz` | no | `now()` | |
-| `updated_at` | `timestamptz` | no | `now()` | Set on every update |
+| Column                  | Type                   | Null | Default             | Key / notes                                       |
+| ----------------------- | ---------------------- | ---- | ------------------- | ------------------------------------------------- |
+| `id`                    | `uuid`                 | no   | `gen_random_uuid()` | **PK**                                            |
+| `user_id`               | `uuid`                 | no   | —                   | **FK** → `profiles.id`, on delete cascade         |
+| `kind`                  | `application_kind`     | no   | —                   |                                                   |
+| `organization`          | `text`                 | no   | —                   | School or company                                 |
+| `position`              | `text`                 | no   | —                   | Program name or role title                        |
+| `term`                  | `text`                 | yes  | —                   | For example "Fall 2027"                           |
+| `status`                | `application_status`   | no   | `'researching'`     |                                                   |
+| `priority`              | `application_priority` | yes  | —                   |                                                   |
+| `deadline_at`           | `timestamptz`          | yes  | —                   | Null for rolling deadlines                        |
+| `submitted_at`          | `timestamptz`          | yes  | —                   | Set the first time the status becomes `submitted` |
+| `portal_url`            | `text`                 | yes  | —                   |                                                   |
+| `location`              | `text`                 | yes  | —                   | Mostly for internships                            |
+| `application_fee_cents` | `integer`              | yes  | —                   | Money is stored in cents                          |
+| `notes`                 | `text`                 | yes  | —                   |                                                   |
+| `created_at`            | `timestamptz`          | no   | `now()`             |                                                   |
+| `updated_at`            | `timestamptz`          | no   | `now()`             | Set on every update                               |
 
 - **Check** `applications_fee_non_negative`: `application_fee_cents >= 0`
 - **Index** `applications_user_deadline_idx` on `(user_id, deadline_at)`
 
 #### `recommenders` — a person who writes letters for the user
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | `gen_random_uuid()` | **PK** |
-| `user_id` | `uuid` | no | — | **FK** → `profiles.id`, on delete cascade |
-| `name` | `text` | no | — | |
-| `email` | `text` | yes | — | |
-| `title` | `text` | yes | — | For example "Associate Professor" |
-| `organization` | `text` | yes | — | For example "UNC Computer Science" |
-| `relationship` | `text` | yes | — | For example "Research advisor, 2 years" |
-| `notes` | `text` | yes | — | |
-| `share_token` | `uuid` | no | `gen_random_uuid()` | **Unique**. The secret in the recommender portal link |
-| `share_enabled` | `boolean` | no | `false` | The portal link only works while this is true |
-| `created_at` | `timestamptz` | no | `now()` | |
-| `updated_at` | `timestamptz` | no | `now()` | Set on every update |
+| Column          | Type          | Null | Default             | Key / notes                                           |
+| --------------- | ------------- | ---- | ------------------- | ----------------------------------------------------- |
+| `id`            | `uuid`        | no   | `gen_random_uuid()` | **PK**                                                |
+| `user_id`       | `uuid`        | no   | —                   | **FK** → `profiles.id`, on delete cascade             |
+| `name`          | `text`        | no   | —                   |                                                       |
+| `email`         | `text`        | yes  | —                   |                                                       |
+| `title`         | `text`        | yes  | —                   | For example "Associate Professor"                     |
+| `organization`  | `text`        | yes  | —                   | For example "UNC Computer Science"                    |
+| `relationship`  | `text`        | yes  | —                   | For example "Research advisor, 2 years"               |
+| `notes`         | `text`        | yes  | —                   |                                                       |
+| `share_token`   | `uuid`        | no   | `gen_random_uuid()` | **Unique**. The secret in the recommender portal link |
+| `share_enabled` | `boolean`     | no   | `false`             | The portal link only works while this is true         |
+| `created_at`    | `timestamptz` | no   | `now()`             |                                                       |
+| `updated_at`    | `timestamptz` | no   | `now()`             | Set on every update                                   |
 
 - **Unique** `recommenders_share_token_key` on `(share_token)`
 - **Index** `recommenders_user_idx` on `(user_id)`
@@ -114,18 +114,18 @@ Created automatically by a database trigger when Supabase Auth inserts a row int
 
 One row is one letter that one recommender owes for one application. It has its own id because a letter carries data (status, dates, notes) and is edited on its own.
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | `gen_random_uuid()` | **PK** |
-| `application_id` | `uuid` | no | — | **FK** → `applications.id`, on delete cascade |
-| `recommender_id` | `uuid` | no | — | **FK** → `recommenders.id`, on delete cascade |
-| `status` | `letter_status` | no | `'planned'` | |
-| `requested_at` | `timestamptz` | yes | — | Set the first time the status becomes `requested` |
-| `due_at` | `timestamptz` | yes | — | Null means "use the application's deadline" |
-| `submitted_at` | `timestamptz` | yes | — | Set when the status becomes `submitted` |
-| `notes` | `text` | yes | — | |
-| `created_at` | `timestamptz` | no | `now()` | |
-| `updated_at` | `timestamptz` | no | `now()` | Set on every update |
+| Column           | Type            | Null | Default             | Key / notes                                                                       |
+| ---------------- | --------------- | ---- | ------------------- | --------------------------------------------------------------------------------- |
+| `id`             | `uuid`          | no   | `gen_random_uuid()` | **PK**                                                                            |
+| `application_id` | `uuid`          | no   | —                   | **FK** → `applications.id`, on delete cascade                                     |
+| `recommender_id` | `uuid`          | no   | —                   | **FK** → `recommenders.id`, on delete cascade                                     |
+| `status`         | `letter_status` | no   | `'planned'`         |                                                                                   |
+| `requested_at`   | `timestamptz`   | yes  | —                   | Set the first time the status becomes `requested`                                 |
+| `due_at`         | `timestamptz`   | yes  | —                   | Null means "use the application's deadline"                                       |
+| `submitted_at`   | `timestamptz`   | yes  | —                   | Set when the status becomes `submitted`; cleared when it changes to anything else |
+| `notes`          | `text`          | yes  | —                   |                                                                                   |
+| `created_at`     | `timestamptz`   | no   | `now()`             |                                                                                   |
+| `updated_at`     | `timestamptz`   | no   | `now()`             | Set on every update                                                               |
 
 - **Unique** `recommendation_requests_application_recommender_unique` on `(application_id, recommender_id)`: a recommender writes at most one letter per application
 - **Index** `recommendation_requests_recommender_idx` on `(recommender_id)`
@@ -134,14 +134,14 @@ One row is one letter that one recommender owes for one application. It has its 
 
 For example "SOP – ML focus" or "Resume – SWE". The files themselves are rows of `document_versions`.
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | `gen_random_uuid()` | **PK** |
-| `user_id` | `uuid` | no | — | **FK** → `profiles.id`, on delete cascade |
-| `title` | `text` | no | — | |
-| `type` | `document_type` | no | — | |
-| `created_at` | `timestamptz` | no | `now()` | |
-| `updated_at` | `timestamptz` | no | `now()` | Set on every update |
+| Column       | Type            | Null | Default             | Key / notes                               |
+| ------------ | --------------- | ---- | ------------------- | ----------------------------------------- |
+| `id`         | `uuid`          | no   | `gen_random_uuid()` | **PK**                                    |
+| `user_id`    | `uuid`          | no   | —                   | **FK** → `profiles.id`, on delete cascade |
+| `title`      | `text`          | no   | —                   |                                           |
+| `type`       | `document_type` | no   | —                   |                                           |
+| `created_at` | `timestamptz`   | no   | `now()`             |                                           |
+| `updated_at` | `timestamptz`   | no   | `now()`             | Set on every update                       |
 
 - **Index** `documents_user_idx` on `(user_id)`
 
@@ -149,16 +149,16 @@ For example "SOP – ML focus" or "Resume – SWE". The files themselves are row
 
 A version is never edited, so it has no `updated_at`.
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `id` | `uuid` | no | `gen_random_uuid()` | **PK** |
-| `document_id` | `uuid` | no | — | **FK** → `documents.id`, on delete cascade |
-| `version_number` | `integer` | no | — | Assigned by the server: current highest + 1 |
-| `storage_path` | `text` | no | — | Object path in the `documents` storage bucket |
-| `file_name` | `text` | no | — | Original file name |
-| `file_size_bytes` | `integer` | yes | — | |
-| `change_note` | `text` | yes | — | For example "Shortened intro, added research section" |
-| `created_at` | `timestamptz` | no | `now()` | |
+| Column            | Type          | Null | Default             | Key / notes                                           |
+| ----------------- | ------------- | ---- | ------------------- | ----------------------------------------------------- |
+| `id`              | `uuid`        | no   | `gen_random_uuid()` | **PK**                                                |
+| `document_id`     | `uuid`        | no   | —                   | **FK** → `documents.id`, on delete cascade            |
+| `version_number`  | `integer`     | no   | —                   | Assigned by the server: current highest + 1           |
+| `storage_path`    | `text`        | no   | —                   | Object path in the `documents` storage bucket         |
+| `file_name`       | `text`        | no   | —                   | Original file name                                    |
+| `file_size_bytes` | `integer`     | yes  | —                   |                                                       |
+| `change_note`     | `text`        | yes  | —                   | For example "Shortened intro, added research section" |
+| `created_at`      | `timestamptz` | no   | `now()`             |                                                       |
 
 - **Unique** `document_versions_document_version_unique` on `(document_id, version_number)`
 
@@ -166,11 +166,11 @@ A version is never edited, so it has no `updated_at`.
 
 One row records that one exact file version was attached to one application.
 
-| Column | Type | Null | Default | Key / notes |
-| --- | --- | --- | --- | --- |
-| `application_id` | `uuid` | no | — | **PK** (part 1). **FK** → `applications.id`, on delete cascade |
-| `document_version_id` | `uuid` | no | — | **PK** (part 2). **FK** → `document_versions.id`, on delete cascade |
-| `attached_at` | `timestamptz` | no | `now()` | |
+| Column                | Type          | Null | Default | Key / notes                                                         |
+| --------------------- | ------------- | ---- | ------- | ------------------------------------------------------------------- |
+| `application_id`      | `uuid`        | no   | —       | **PK** (part 1). **FK** → `applications.id`, on delete cascade      |
+| `document_version_id` | `uuid`        | no   | —       | **PK** (part 2). **FK** → `document_versions.id`, on delete cascade |
+| `attached_at`         | `timestamptz` | no   | `now()` |                                                                     |
 
 - **Composite primary key** `(application_id, document_version_id)`
 - **Index** `application_documents_version_idx` on `(document_version_id)`
@@ -180,19 +180,19 @@ One row records that one exact file version was attached to one application.
 
 **Many-to-one** (the "many" side holds the foreign key):
 
-| Many | One | Foreign key |
-| --- | --- | --- |
-| `applications` | `profiles` | `applications.user_id` |
-| `recommenders` | `profiles` | `recommenders.user_id` |
-| `documents` | `profiles` | `documents.user_id` |
+| Many                | One         | Foreign key                     |
+| ------------------- | ----------- | ------------------------------- |
+| `applications`      | `profiles`  | `applications.user_id`          |
+| `recommenders`      | `profiles`  | `recommenders.user_id`          |
+| `documents`         | `profiles`  | `documents.user_id`             |
 | `document_versions` | `documents` | `document_versions.document_id` |
 
 **Many-to-many** (through a join table):
 
-| Side A | Side B | Join table | Meaning |
-| --- | --- | --- | --- |
-| `applications` | `recommenders` | `recommendation_requests` | One professor writes letters for many applications; one application needs letters from several professors |
-| `applications` | `document_versions` | `application_documents` | One essay version is sent to many applications; one application has several documents attached |
+| Side A         | Side B              | Join table                | Meaning                                                                                                   |
+| -------------- | ------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `applications` | `recommenders`      | `recommendation_requests` | One professor writes letters for many applications; one application needs letters from several professors |
+| `applications` | `document_versions` | `application_documents`   | One essay version is sent to many applications; one application has several documents attached            |
 
 **One-to-one:** `profiles.id` → `auth.users.id` (Supabase Auth's user table).
 
@@ -202,19 +202,19 @@ These are set up by the hand-written migration `supabase/migrations/202611230558
 
 **Profile trigger.** `on_auth_user_created` runs `public.handle_new_user()` after every insert on `auth.users`. It inserts the matching `profiles` row, taking `display_name` from the sign-up metadata and falling back to the name part of the email.
 
-**Where authorization happens.** The server reaches Postgres through Drizzle as the table owner, which bypasses Row Level Security. So the real authorization is in the tRPC procedures: every protected procedure filters by the signed-in user's id, and join rows are only created when *both* sides belong to that user. A row that does not exist and a row owned by someone else both answer `NOT_FOUND`.
+**Where authorization happens.** The server reaches Postgres through Drizzle as the table owner, which bypasses Row Level Security. So the real authorization is in the tRPC procedures: every protected procedure filters by the signed-in user's id, and join rows are only created when _both_ sides belong to that user. A row that does not exist and a row owned by someone else both answer `NOT_FOUND`.
 
 **Row Level Security** is still enabled on all 7 tables, because the publishable Supabase key ships to the browser and Supabase's auto-generated REST API must not expose the tables to it.
 
-| Table | Policy | Rule for the `authenticated` role |
-| --- | --- | --- |
-| `profiles` | `profiles_select_own`, `profiles_update_own` | `id = auth.uid()` |
-| `applications` | `applications_owner_all` | `user_id = auth.uid()` |
-| `recommenders` | `recommenders_owner_all` | `user_id = auth.uid()` |
-| `documents` | `documents_owner_all` | `user_id = auth.uid()` |
-| `recommendation_requests` | `recommendation_requests_owner_all` | The application belongs to the user; on write, the recommender must too |
-| `document_versions` | `document_versions_owner_all` | The parent document belongs to the user |
-| `application_documents` | `application_documents_owner_all` | The application belongs to the user; on write, the version's document must too |
+| Table                     | Policy                                       | Rule for the `authenticated` role                                              |
+| ------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
+| `profiles`                | `profiles_select_own`, `profiles_update_own` | `id = auth.uid()`                                                              |
+| `applications`            | `applications_owner_all`                     | `user_id = auth.uid()`                                                         |
+| `recommenders`            | `recommenders_owner_all`                     | `user_id = auth.uid()`                                                         |
+| `documents`               | `documents_owner_all`                        | `user_id = auth.uid()`                                                         |
+| `recommendation_requests` | `recommendation_requests_owner_all`          | The application belongs to the user; on write, the recommender must too        |
+| `document_versions`       | `document_versions_owner_all`                | The parent document belongs to the user                                        |
+| `application_documents`   | `application_documents_owner_all`            | The application belongs to the user; on write, the version's document must too |
 
 There is no policy for the `anon` role, so signed-out requests see nothing.
 
@@ -233,13 +233,13 @@ The backend is a tRPC API served at **`/api/trpc`**. The React frontend calls it
 
 ### 2.1 Calling convention
 
-| | |
-| --- | --- |
-| **Query** | `GET /api/trpc/<router>.<procedure>?input=<URL-encoded JSON>` |
-| **Mutation** | `POST /api/trpc/<router>.<procedure>` with a JSON body |
-| **Envelope** | superjson: the input is `{ "json": <input> }` and a success is `{ "result": { "data": { "json": <output> } } }` |
-| **Dates** | ISO 8601 strings in JSON, for example `"2026-12-15T04:59:00.000Z"`. superjson turns them back into `Date` objects |
-| **Batching** | The client may combine several calls into one request (`?batch=1`) |
+|              |                                                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **Query**    | `GET /api/trpc/<router>.<procedure>?input=<URL-encoded JSON>`                                                     |
+| **Mutation** | `POST /api/trpc/<router>.<procedure>` with a JSON body                                                            |
+| **Envelope** | superjson: the input is `{ "json": <input> }` and a success is `{ "result": { "data": { "json": <output> } } }`   |
+| **Dates**    | ISO 8601 strings in JSON, for example `"2026-12-15T04:59:00.000Z"`. superjson turns them back into `Date` objects |
+| **Batching** | The client may combine several calls into one request (`?batch=1`)                                                |
 
 The examples below show only the `<input>` and `<output>` parts.
 
@@ -256,18 +256,23 @@ The examples below show only the `<input>` and `<output>` parts.
     "json": {
       "message": "Application not found.",
       "code": -32004,
-      "data": { "code": "NOT_FOUND", "httpStatus": 404, "path": "applications.byId", "zodError": null }
+      "data": {
+        "code": "NOT_FOUND",
+        "httpStatus": 404,
+        "path": "applications.byId",
+        "zodError": null
+      }
     }
   }
 }
 ```
 
-| Code | HTTP | When |
-| --- | --- | --- |
-| `BAD_REQUEST` | 400 | The input fails validation (`zodError` lists the fields), or a rule is broken, such as a storage path outside the user's folder |
-| `UNAUTHORIZED` | 401 | An Auth procedure is called without a session |
-| `NOT_FOUND` | 404 | The row does not exist **or belongs to another user** |
-| `CONFLICT` | 409 | The row already exists, such as assigning the same recommender twice |
+| Code           | HTTP | When                                                                                                                            |
+| -------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `BAD_REQUEST`  | 400  | The input fails validation (`zodError` lists the fields), or a rule is broken, such as a storage path outside the user's folder |
+| `UNAUTHORIZED` | 401  | An Auth procedure is called without a session                                                                                   |
+| `NOT_FOUND`    | 404  | The row does not exist **or belongs to another user**                                                                           |
+| `CONFLICT`     | 409  | The row already exists, such as assigning the same recommender twice                                                            |
 
 ### 2.2 Shared types
 
@@ -275,17 +280,43 @@ Optional input fields are marked `?`. For optional text, date and number fields,
 
 ```ts
 type Kind = "grad_school" | "internship";
-type Status = "researching" | "preparing" | "submitted" | "interviewing" | "offer" | "waitlisted" | "rejected" | "withdrawn";
+type Status =
+  | "researching"
+  | "preparing"
+  | "submitted"
+  | "interviewing"
+  | "offer"
+  | "waitlisted"
+  | "rejected"
+  | "withdrawn";
 type Priority = "reach" | "target" | "safety";
-type LetterStatus = "planned" | "requested" | "confirmed" | "submitted" | "declined";
-type DocType = "sop" | "personal_statement" | "cv" | "resume" | "cover_letter" | "writing_sample" | "other";
+type LetterStatus =
+  "planned" | "requested" | "confirmed" | "submitted" | "declined";
+type DocType =
+  | "sop"
+  | "personal_statement"
+  | "cv"
+  | "resume"
+  | "cover_letter"
+  | "writing_sample"
+  | "other";
 
 type Application = {
-  id: string; kind: Kind; organization: string; position: string; term: string | null;
-  status: Status; priority: Priority | null;
-  deadlineAt: string | null; submittedAt: string | null;
-  portalUrl: string | null; location: string | null; applicationFeeCents: number | null;
-  notes: string | null; createdAt: string; updatedAt: string;
+  id: string;
+  kind: Kind;
+  organization: string;
+  position: string;
+  term: string | null;
+  status: Status;
+  priority: Priority | null;
+  deadlineAt: string | null;
+  submittedAt: string | null;
+  portalUrl: string | null;
+  location: string | null;
+  applicationFeeCents: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 type ApplicationSummary = Application & {
   letters: { submitted: number; total: number };
@@ -293,18 +324,38 @@ type ApplicationSummary = Application & {
 };
 type ApplicationDetail = Application & {
   letters: (RecommendationRequest & {
-    recommender: { id: string; name: string; email: string | null; title: string | null };
+    recommender: {
+      id: string;
+      name: string;
+      email: string | null;
+      title: string | null;
+    };
   })[];
   documents: {
-    versionId: string; versionNumber: number; fileName: string; attachedAt: string;
-    document: { id: string; title: string; type: DocType; latestVersionNumber: number };
+    versionId: string;
+    versionNumber: number;
+    fileName: string;
+    attachedAt: string;
+    document: {
+      id: string;
+      title: string;
+      type: DocType;
+      latestVersionNumber: number;
+    };
   }[];
 };
 
 type Recommender = {
-  id: string; name: string; email: string | null; title: string | null;
-  organization: string | null; relationship: string | null; notes: string | null;
-  shareEnabled: boolean; createdAt: string; updatedAt: string;
+  id: string;
+  name: string;
+  email: string | null;
+  title: string | null;
+  organization: string | null;
+  relationship: string | null;
+  notes: string | null;
+  shareEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 type RecommenderWithStats = Recommender & {
   counts: Record<LetterStatus, number>;
@@ -312,41 +363,90 @@ type RecommenderWithStats = Recommender & {
 };
 type RecommenderDetail = Recommender & {
   letters: (RecommendationRequest & {
-    application: { id: string; organization: string; position: string; deadlineAt: string | null; status: Status };
+    application: {
+      id: string;
+      organization: string;
+      position: string;
+      deadlineAt: string | null;
+      status: Status;
+    };
   })[];
 };
 type RecommendationRequest = {
-  id: string; applicationId: string; recommenderId: string; status: LetterStatus;
-  requestedAt: string | null; dueAt: string | null; submittedAt: string | null; notes: string | null;
+  id: string;
+  applicationId: string;
+  recommenderId: string;
+  status: LetterStatus;
+  requestedAt: string | null;
+  dueAt: string | null;
+  submittedAt: string | null;
+  notes: string | null;
 };
 
 // Named "Doc" rather than "Document" to avoid clashing with the browser's global Document type.
-type Doc = { id: string; title: string; type: DocType; createdAt: string; updatedAt: string };
+type Doc = {
+  id: string;
+  title: string;
+  type: DocType;
+  createdAt: string;
+  updatedAt: string;
+};
 type DocVersion = {
-  id: string; documentId: string; versionNumber: number; fileName: string;
-  fileSizeBytes: number | null; changeNote: string | null; createdAt: string;
+  id: string;
+  documentId: string;
+  versionNumber: number;
+  fileName: string;
+  fileSizeBytes: number | null;
+  changeNote: string | null;
+  createdAt: string;
 };
 type DocSummary = Doc & {
   versionCount: number;
-  latestVersion: { id: string; versionNumber: number; createdAt: string } | null;
+  latestVersion: {
+    id: string;
+    versionNumber: number;
+    createdAt: string;
+  } | null;
   applicationCount: number;
 };
 type DocDetail = Doc & {
   versions: (DocVersion & {
-    applications: { id: string; organization: string; position: string; status: Status }[];
+    applications: {
+      id: string;
+      organization: string;
+      position: string;
+      status: Status;
+    }[];
   })[];
 };
 
 type DashboardSummary = {
   countsByStatus: Record<Status, number>;
-  upcoming: { type: "application" | "letter"; id: string; applicationId: string; title: string; dueAt: string }[];
-  outstandingLetters: { recommenderId: string; name: string; pending: number }[];
+  upcoming: {
+    type: "application" | "letter";
+    id: string;
+    applicationId: string;
+    title: string;
+    dueAt: string;
+  }[];
+  outstandingLetters: {
+    recommenderId: string;
+    name: string;
+    pending: number;
+  }[];
   totalFeesCents: number;
 };
 
 type PortalView = {
-  recommenderName: string; applicantName: string;
-  letters: { id: string; organization: string; position: string; dueAt: string | null; status: LetterStatus }[];
+  recommenderName: string;
+  applicantName: string;
+  letters: {
+    id: string;
+    organization: string;
+    position: string;
+    dueAt: string | null;
+    status: LetterStatus;
+  }[];
 };
 ```
 
@@ -356,37 +456,37 @@ Three columns never leave the server: `user_id`, `recommenders.share_token` (onl
 
 29 procedures in 8 routers.
 
-| Procedure | Kind | Access | Purpose |
-| --- | --- | --- | --- |
-| `profile.me` | query | Auth | The signed-in user |
-| `profile.update` | mutation | Auth | Change the display name |
-| `applications.list` | query | Auth | List with filters, search and sort |
-| `applications.byId` | query | Auth | One application with letters and documents |
-| `applications.create` | mutation | Auth | Create |
-| `applications.update` | mutation | Auth | Edit any field |
-| `applications.updateStatus` | mutation | Auth | Change only the status |
-| `applications.delete` | mutation | Auth | Delete |
-| `recommenders.list` | query | Auth | List with letter counts and next due date |
-| `recommenders.byId` | query | Auth | One recommender with their letters |
-| `recommenders.create` | mutation | Auth | Create |
-| `recommenders.update` | mutation | Auth | Edit any field |
-| `recommenders.delete` | mutation | Auth | Delete |
-| `recommenders.setSharing` | mutation | Auth | Turn the portal link on or off |
-| `recommendations.assign` | mutation | Auth | Assign a recommender to an application |
-| `recommendations.update` | mutation | Auth | Edit a letter's status, due date or notes |
-| `recommendations.remove` | mutation | Auth | Remove a letter |
-| `documents.list` | query | Auth | List with version and usage counts |
-| `documents.byId` | query | Auth | One document with its version history |
-| `documents.create` | mutation | Auth | Create (no versions yet) |
-| `documents.update` | mutation | Auth | Rename or change the type |
-| `documents.delete` | mutation | Auth | Delete, including the files |
-| `documents.addVersion` | mutation | Auth | Record an uploaded file as the next version |
-| `documents.downloadUrl` | query | Auth | Signed download link for one version |
-| `applicationDocuments.attach` | mutation | Auth | Attach a version to an application |
-| `applicationDocuments.detach` | mutation | Auth | Detach a version |
-| `dashboard.summary` | query | Auth | Everything the dashboard shows |
-| `portal.byToken` | query | **Public** | A recommender's requested letters |
-| `portal.markSubmitted` | mutation | **Public** | A recommender marks a letter as submitted |
+| Procedure                     | Kind     | Access     | Purpose                                     |
+| ----------------------------- | -------- | ---------- | ------------------------------------------- |
+| `profile.me`                  | query    | Auth       | The signed-in user                          |
+| `profile.update`              | mutation | Auth       | Change the display name                     |
+| `applications.list`           | query    | Auth       | List with filters, search and sort          |
+| `applications.byId`           | query    | Auth       | One application with letters and documents  |
+| `applications.create`         | mutation | Auth       | Create                                      |
+| `applications.update`         | mutation | Auth       | Edit any field                              |
+| `applications.updateStatus`   | mutation | Auth       | Change only the status                      |
+| `applications.delete`         | mutation | Auth       | Delete                                      |
+| `recommenders.list`           | query    | Auth       | List with letter counts and next due date   |
+| `recommenders.byId`           | query    | Auth       | One recommender with their letters          |
+| `recommenders.create`         | mutation | Auth       | Create                                      |
+| `recommenders.update`         | mutation | Auth       | Edit any field                              |
+| `recommenders.delete`         | mutation | Auth       | Delete                                      |
+| `recommenders.setSharing`     | mutation | Auth       | Turn the portal link on or off              |
+| `recommendations.assign`      | mutation | Auth       | Assign a recommender to an application      |
+| `recommendations.update`      | mutation | Auth       | Edit a letter's status, due date or notes   |
+| `recommendations.remove`      | mutation | Auth       | Remove a letter                             |
+| `documents.list`              | query    | Auth       | List with version and usage counts          |
+| `documents.byId`              | query    | Auth       | One document with its version history       |
+| `documents.create`            | mutation | Auth       | Create (no versions yet)                    |
+| `documents.update`            | mutation | Auth       | Rename or change the type                   |
+| `documents.delete`            | mutation | Auth       | Delete, including the files                 |
+| `documents.addVersion`        | mutation | Auth       | Record an uploaded file as the next version |
+| `documents.downloadUrl`       | query    | Auth       | Signed download link for one version        |
+| `applicationDocuments.attach` | mutation | Auth       | Attach a version to an application          |
+| `applicationDocuments.detach` | mutation | Auth       | Detach a version                            |
+| `dashboard.summary`           | query    | Auth       | Everything the dashboard shows              |
+| `portal.byToken`              | query    | **Public** | A recommender's requested letters           |
+| `portal.markSubmitted`        | mutation | **Public** | A recommender marks a letter as submitted   |
 
 ### 2.4 `profile` — Auth
 
@@ -429,7 +529,12 @@ Input `{ kind?, statuses?: Status[], search?, sort?: "deadline" | "updated" | "o
 Input:
 
 ```json
-{ "kind": "grad_school", "statuses": ["researching", "preparing"], "search": "carnegie", "sort": "deadline" }
+{
+  "kind": "grad_school",
+  "statuses": ["researching", "preparing"],
+  "search": "carnegie",
+  "sort": "deadline"
+}
 ```
 
 Output: `ApplicationSummary[]`
@@ -526,16 +631,16 @@ Output: `ApplicationDetail`
 
 Input `{ kind, organization, position, term?, status?, priority?, deadlineAt?, portalUrl?, location?, applicationFeeCents?, notes? }`.
 
-| Field | Rule |
-| --- | --- |
-| `organization`, `position` | Required, 1–200 characters |
-| `term` | At most 50 characters |
-| `status` | Defaults to `researching` |
-| `deadlineAt` | ISO 8601 date and time |
-| `portalUrl` | A valid `http://` or `https://` URL, at most 2000 characters |
-| `location` | At most 200 characters |
-| `applicationFeeCents` | Integer from 0 to 1,000,000 |
-| `notes` | At most 5000 characters |
+| Field                      | Rule                                                         |
+| -------------------------- | ------------------------------------------------------------ |
+| `organization`, `position` | Required, 1–200 characters                                   |
+| `term`                     | At most 50 characters                                        |
+| `status`                   | Defaults to `researching`                                    |
+| `deadlineAt`               | ISO 8601 date and time                                       |
+| `portalUrl`                | A valid `http://` or `https://` URL, at most 2000 characters |
+| `location`                 | At most 200 characters                                       |
+| `applicationFeeCents`      | Integer from 0 to 1,000,000                                  |
+| `notes`                    | At most 5000 characters                                      |
 
 Input:
 
@@ -659,7 +764,13 @@ Output: `RecommenderWithStats[]`
     "shareEnabled": false,
     "createdAt": "2026-11-01T14:00:00.000Z",
     "updatedAt": "2026-11-01T14:00:00.000Z",
-    "counts": { "planned": 1, "requested": 2, "confirmed": 1, "submitted": 2, "declined": 0 },
+    "counts": {
+      "planned": 1,
+      "requested": 2,
+      "confirmed": 1,
+      "submitted": 2,
+      "declined": 0
+    },
     "nextDueAt": "2026-12-02T04:59:00.000Z"
   }
 ]
@@ -749,7 +860,10 @@ Input `{ id }` plus any `create` field, all optional.
 Input:
 
 ```json
-{ "id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3caa", "notes": "Prefers two weeks of notice." }
+{
+  "id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3caa",
+  "notes": "Prefers two weeks of notice."
+}
 ```
 
 Output: `Recommender` (same shape as `recommenders.create`, with the new values).
@@ -824,12 +938,16 @@ Output: `RecommendationRequest`
 
 #### `recommendations.update` · mutation · Auth
 
-Input `{ id, status?, dueAt?, notes? }`. Sets `requestedAt` the first time the status becomes `requested`, and `submittedAt` when it becomes `submitted`.
+Input `{ id, status?, dueAt?, notes? }`. Sets `requestedAt` the first time the status becomes `requested`, and `submittedAt` when it becomes `submitted`. Changing the status away from `submitted` clears `submittedAt`, so it is set exactly while the letter is submitted.
 
 Input:
 
 ```json
-{ "id": "d4c3b2a1-0f9e-4d8c-b7a6-5f4e3d2c1bcc", "status": "requested", "notes": "Emailed on 11/23." }
+{
+  "id": "d4c3b2a1-0f9e-4d8c-b7a6-5f4e3d2c1bcc",
+  "status": "requested",
+  "notes": "Emailed on 11/23."
+}
 ```
 
 Output: `RecommendationRequest`
@@ -974,7 +1092,10 @@ Input `{ id, title?, type? }`.
 Input:
 
 ```json
-{ "id": "7e6d5c4b-3a29-4180-8f7e-6d5c4b3a29ee", "title": "Resume – SWE (1 page)" }
+{
+  "id": "7e6d5c4b-3a29-4180-8f7e-6d5c4b3a29ee",
+  "title": "Resume – SWE (1 page)"
+}
 ```
 
 Output: `Doc` (same shape as `documents.create`, with the new values).
@@ -999,12 +1120,12 @@ Output:
 
 Uploading is two steps. First the browser uploads the file straight to the `documents` bucket with the user's session. Then it calls this procedure to record the file. The server assigns `versionNumber` (current highest + 1).
 
-| Field | Rule |
-| --- | --- |
-| `storagePath` | Must start with `{userId}/`, otherwise `BAD_REQUEST` |
-| `fileName` | 1–255 characters |
-| `fileSizeBytes` | Integer from 1 to 10,485,760 (10 MB) |
-| `changeNote` | Optional, at most 500 characters |
+| Field           | Rule                                                 |
+| --------------- | ---------------------------------------------------- |
+| `storagePath`   | Must start with `{userId}/`, otherwise `BAD_REQUEST` |
+| `fileName`      | 1–255 characters                                     |
+| `fileSizeBytes` | Integer from 1 to 10,485,760 (10 MB)                 |
+| `changeNote`    | Optional, at most 500 characters                     |
 
 Input:
 
@@ -1139,7 +1260,11 @@ Output: `DashboardSummary`
     }
   ],
   "outstandingLetters": [
-    { "recommenderId": "e7b3c1a0-4d2f-4e6a-9c8b-1a2b3c4d5e66", "name": "Dr. Maya Patel", "pending": 4 }
+    {
+      "recommenderId": "e7b3c1a0-4d2f-4e6a-9c8b-1a2b3c4d5e66",
+      "name": "Dr. Maya Patel",
+      "pending": 4
+    }
   ],
   "totalFeesCents": 21500
 }

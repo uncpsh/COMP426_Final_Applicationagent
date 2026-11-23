@@ -1,30 +1,19 @@
 /**
- * Route for `/recommenders`. Requires a signed-in user.
+ * Route for the recommenders list (`/recommenders`).
  *
- * Placeholder: the real page is built in Phase 4 of the build plan.
+ * This Server Component checks that the user is signed in (redirecting to
+ * the login page if not) and renders the interactive list
+ * (`recommenders-page.tsx`), which loads its data through tRPC.
  */
 
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/components/coming-soon";
-import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/utils/supabase/auth";
+import RecommendersPage from "./recommenders-page";
 
 export const metadata: Metadata = { title: "Recommenders" };
 
 export default async function Page() {
   await requireUser();
-
-  return (
-    <>
-      <PageHeader
-        title="Recommenders"
-        description="Who is writing letters for you, and for which applications."
-      />
-      <ComingSoon>
-        Your recommenders, their letter counts and next due dates will appear
-        here.
-      </ComingSoon>
-    </>
-  );
+  return <RecommendersPage />;
 }
