@@ -23,23 +23,27 @@ npx drizzle-kit migrate                         # applies it to the database
 
 ## Project Structure
 
-| Path | What it is |
-| --- | --- |
-| `app/layout.tsx` | Root layout (theme, tRPC provider) |
-| `app/page.tsx` | Landing page (`/`) |
-| `app/api/trpc/[trpc]/route.ts` | tRPC API endpoint |
-| `server/api/trpc.ts` | tRPC context, `publicProcedure` and `protectedProcedure` |
-| `server/api/root.ts` | The app router, which combines the feature routers |
-| `server/api/routers/` | One tRPC router per feature |
-| `server/models/` | Zod models: `enums.ts`, API `inputs.ts` and `responses.ts` |
-| `server/db/schema.ts` | Drizzle table definitions |
-| `server/db/relations.ts` | Drizzle relations (`defineRelations`) |
-| `supabase/migrations/` | SQL migrations, including the profile trigger, RLS policies and the storage bucket |
-| `docs/schema-and-api.md` | Database schema and API documentation |
-| `utils/supabase/` | Supabase clients (browser and server) and the `requireUser` helper |
-| `utils/trpc/` | tRPC React Query client (`api`) and its provider |
-| `components/ui/` | shadcn/ui components |
-| `proxy.ts` | Refreshes the Supabase session on each request |
+| Path                           | What it is                                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `app/layout.tsx`               | Root layout (theme, tRPC provider, toasts)                                                            |
+| `app/page.tsx`                 | Landing page (`/`)                                                                                    |
+| `app/login/`, `app/signup/`    | Public auth pages: a server `page.tsx` plus its client form                                           |
+| `app/(app)/`                   | Every page that needs a signed-in user. `layout.tsx` is the app shell (header, navigation, user menu) |
+| `app/api/trpc/[trpc]/route.ts` | tRPC API endpoint                                                                                     |
+| `server/api/trpc.ts`           | tRPC context, `publicProcedure` and `protectedProcedure`                                              |
+| `server/api/root.ts`           | The app router, which combines the feature routers                                                    |
+| `server/api/routers/`          | One tRPC router per feature                                                                           |
+| `server/models/`               | Zod models: `enums.ts`, API `inputs.ts` and `responses.ts`                                            |
+| `server/db/schema.ts`          | Drizzle table definitions                                                                             |
+| `server/db/relations.ts`       | Drizzle relations (`defineRelations`)                                                                 |
+| `supabase/migrations/`         | SQL migrations, including the profile trigger, RLS policies and the storage bucket                    |
+| `docs/schema-and-api.md`       | Database schema and API documentation                                                                 |
+| `utils/supabase/`              | Supabase clients (browser and server) and the `requireUser` / `getOptionalUser` helpers               |
+| `utils/trpc/`                  | tRPC React Query client (`api`) and its provider                                                      |
+| `components/ui/`               | shadcn/ui components                                                                                  |
+| `components/shell/`            | App shell: navigation links, user menu, edit-profile dialog                                           |
+| `components/`                  | Shared pieces: `PageHeader`, `FormField`, `Brand`                                                     |
+| `proxy.ts`                     | Refreshes the Supabase session on each request                                                        |
 
 ## Working on this repo
 
