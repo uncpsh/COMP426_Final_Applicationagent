@@ -35,7 +35,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TRPCReactProvider>{children}</TRPCReactProvider>
-          <Toaster richColors closeButton />
+          {/* Toasts appear just below the header, where they cover neither the
+              page's buttons nor the phone tab bar at the bottom. */}
+          <Toaster
+            richColors
+            closeButton
+            position="top-center"
+            offset={{ top: 64 }}
+            mobileOffset={{ top: 64 }}
+          />
         </ThemeProvider>
       </body>
     </html>

@@ -29,18 +29,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { api } from "@/utils/trpc/api";
 
-/** "Ada Lovelace" -> "AL", "ada" -> "A". */
+/** "Ada Lovelace" -> "AL", "ada" -> "A". Uses the first letter or digit of each word. */
 function initials(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      // `Array.from` splits by character, so an emoji or accented first letter
-      // is not cut in half the way `word[0]` would cut it.
-      .map((word) => (Array.from(word)[0] ?? "").toUpperCase())
-      .join("")
-  );
+  return name
+    .split(/\s+/)
+    .map((word) => word.match(/[\p{L}\p{N}]/u)?.[0] ?? "")
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 export function UserMenu() {

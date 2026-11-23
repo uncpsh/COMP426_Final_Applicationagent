@@ -29,7 +29,12 @@ export const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 const Id = z.string().uuid();
 
 /** Text that must be present: trimmed, not empty, at most `max` characters. */
-const requiredText = (max: number) => z.string().trim().min(1).max(max);
+const requiredText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, "This field is required.")
+    .max(max, `Use at most ${max} characters.`);
 
 /**
  * Text that may be left out. An empty string and `null` both mean "no value",
@@ -39,14 +44,17 @@ const optionalText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max)
+    .max(max, `Use at most ${max} characters.`)
     .transform((value) => (value === "" ? null : value))
     .nullable()
     .optional();
 
 /** An optional email address, with the same "empty means none" rule. */
 const optionalEmail = z
-  .union([z.literal(""), z.string().trim().max(320).email()])
+  .union([
+    z.literal(""),
+    z.string().trim().max(320).email("Enter a valid email address."),
+  ])
   .transform((value) => (value === "" ? null : value))
   .nullable()
   .optional();
@@ -62,7 +70,7 @@ const optionalUrl = z
       .string()
       .trim()
       .max(2000)
-      .url()
+      .url("Enter a full link, such as https://example.edu/apply.")
       .refine((value) => /^https?:\/\//i.test(value), {
         message: "The link must start with http:// or https://",
       }),
@@ -113,8 +121,8 @@ const applicationOptionalFields = {
   applicationFeeCents: z
     .number()
     .int()
-    .min(0)
-    .max(1_000_000)
+    .min(0, "The fee cannot be negative.")
+    .max(1_000_000, "The fee cannot be more than $10,000.")
     .nullable()
     .optional(),
   notes: optionalText(5000),
