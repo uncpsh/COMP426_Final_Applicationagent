@@ -13,6 +13,14 @@ npm run dev            # http://localhost:3000
 
 Copy `.env.example` to `.env` and fill in the three values from the team's Supabase project first. Never commit `.env`.
 
+The team shares one Supabase project and its tables already exist, so there is nothing to run after cloning. Only when you change `server/db/schema.ts`:
+
+```bash
+git pull                                        # one person changes the schema at a time
+npx drizzle-kit generate --name=<what_changed>  # writes a migration to supabase/migrations/
+npx drizzle-kit migrate                         # applies it to the database
+```
+
 ## Project Structure
 
 | Path | What it is |
@@ -21,9 +29,13 @@ Copy `.env.example` to `.env` and fill in the three values from the team's Supab
 | `app/page.tsx` | Landing page (`/`) |
 | `app/api/trpc/[trpc]/route.ts` | tRPC API endpoint |
 | `server/api/trpc.ts` | tRPC context, `publicProcedure` and `protectedProcedure` |
-| `server/api/root.ts` | The app router; feature routers go in `server/api/routers/` |
+| `server/api/root.ts` | The app router, which combines the feature routers |
+| `server/api/routers/` | One tRPC router per feature |
+| `server/models/` | Zod models: `enums.ts`, API `inputs.ts` and `responses.ts` |
 | `server/db/schema.ts` | Drizzle table definitions |
 | `server/db/relations.ts` | Drizzle relations (`defineRelations`) |
+| `supabase/migrations/` | SQL migrations, including the profile trigger, RLS policies and the storage bucket |
+| `docs/schema-and-api.md` | Database schema and API documentation |
 | `utils/supabase/` | Supabase clients (browser and server) and the `requireUser` helper |
 | `utils/trpc/` | tRPC React Query client (`api`) and its provider |
 | `components/ui/` | shadcn/ui components |
