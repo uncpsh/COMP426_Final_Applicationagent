@@ -101,7 +101,7 @@ export function LetterItem({
       </div>
 
       {letter.notes && (
-        <p className="text-muted-foreground mt-2 border-t pt-2 text-xs break-words whitespace-pre-wrap">
+        <p className="text-muted-foreground mt-2 border-t pt-2 text-xs wrap-anywhere whitespace-pre-wrap">
           {letter.notes}
         </p>
       )}
