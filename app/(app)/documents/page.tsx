@@ -1,30 +1,19 @@
 /**
- * Route for `/documents`. Requires a signed-in user.
+ * Route for the documents list (`/documents`).
  *
- * Placeholder: the real page is built in Phase 5 of the build plan.
+ * This Server Component checks that the user is signed in (redirecting to
+ * the login page if not) and renders the interactive list
+ * (`documents-page.tsx`), which loads its data through tRPC.
  */
 
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/components/coming-soon";
-import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/utils/supabase/auth";
+import DocumentsPage from "./documents-page";
 
 export const metadata: Metadata = { title: "Documents" };
 
 export default async function Page() {
   await requireUser();
-
-  return (
-    <>
-      <PageHeader
-        title="Documents"
-        description="Essays and resumes, with every version you have uploaded."
-      />
-      <ComingSoon>
-        Your documents, their version history and where each version is used
-        will appear here.
-      </ComingSoon>
-    </>
-  );
+  return <DocumentsPage />;
 }

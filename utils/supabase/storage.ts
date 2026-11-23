@@ -75,11 +75,16 @@ export async function uploadDocumentFile(
 ) {
   const storagePath = documentStoragePath(userId, documentId, file.name);
 
+  // Storage reads the content type from the file itself, and the bucket
+  // rejects anything that is not a PDF or DOCX. Browsers sometimes report
+  // no type at all for a `.docx`, so the file is re-labelled with the type
+  // that its extension stands for (`slice` copies no data).
+  const contentType = documentContentType(file) ?? file.type;
+  const body = file.slice(0, file.size, contentType);
+
   const { error } = await supabase.storage
     .from(DOCUMENTS_BUCKET)
-    .upload(storagePath, file, {
-      contentType: documentContentType(file) ?? undefined,
-    });
+    .upload(storagePath, body, { contentType });
   if (error) throw new Error(`Upload failed: ${error.message}`);
 
   return storagePath;

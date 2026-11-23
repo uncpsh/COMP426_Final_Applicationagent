@@ -1120,12 +1120,12 @@ Output:
 
 Uploading is two steps. First the browser uploads the file straight to the `documents` bucket with the user's session. Then it calls this procedure to record the file. The server assigns `versionNumber` (current highest + 1).
 
-| Field           | Rule                                                 |
-| --------------- | ---------------------------------------------------- |
-| `storagePath`   | Must start with `{userId}/`, otherwise `BAD_REQUEST` |
-| `fileName`      | 1–255 characters                                     |
-| `fileSizeBytes` | Integer from 1 to 10,485,760 (10 MB)                 |
-| `changeNote`    | Optional, at most 500 characters                     |
+| Field           | Rule                                                              |
+| --------------- | ----------------------------------------------------------------- |
+| `storagePath`   | Must start with `{userId}/{documentId}/`, otherwise `BAD_REQUEST` |
+| `fileName`      | 1–255 characters                                                  |
+| `fileSizeBytes` | Integer from 1 to 10,485,760 (10 MB)                              |
+| `changeNote`    | Optional, at most 500 characters                                  |
 
 Input:
 
