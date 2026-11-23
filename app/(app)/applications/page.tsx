@@ -1,30 +1,19 @@
 /**
- * Route for `/applications`. Requires a signed-in user.
+ * Route for the applications list (`/applications`).
  *
- * Placeholder: the real page is built in Phase 3 of the build plan.
+ * This Server Component checks that the user is signed in (redirecting to
+ * the login page if not) and renders the interactive list
+ * (`applications-page.tsx`), which loads its data through tRPC.
  */
 
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/components/coming-soon";
-import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/utils/supabase/auth";
+import ApplicationsPage from "./applications-page";
 
 export const metadata: Metadata = { title: "Applications" };
 
 export default async function Page() {
   await requireUser();
-
-  return (
-    <>
-      <PageHeader
-        title="Applications"
-        description="Every program and role you are applying to."
-      />
-      <ComingSoon>
-        Your applications, with filters, search and an inline status select,
-        will appear here.
-      </ComingSoon>
-    </>
-  );
+  return <ApplicationsPage />;
 }
