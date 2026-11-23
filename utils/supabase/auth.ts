@@ -29,3 +29,18 @@ export async function requireUser(): Promise<Subject> {
 
   return { id: userData.claims.sub };
 }
+
+/**
+ * Loads the currently authenticated user without redirecting.
+ *
+ * Used by the public pages: the landing page shows a different button to a
+ * signed-in visitor, and the login and sign-up pages send them straight to
+ * the dashboard.
+ */
+export async function getOptionalUser(): Promise<Subject | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData, error: userError } = await supabase.auth.getClaims();
+
+  if (userError || !userData) return null;
+  return { id: userData.claims.sub };
+}
