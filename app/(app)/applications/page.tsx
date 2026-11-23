@@ -13,7 +13,14 @@ import ApplicationsPage from "./applications-page";
 
 export const metadata: Metadata = { title: "Applications" };
 
-export default async function Page() {
+type PageProps = {
+  searchParams: Promise<{ view?: string | string[] }>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
   await requireUser();
-  return <ApplicationsPage />;
+
+  // `/applications?view=board` opens the board; anything else, the list.
+  const { view } = await searchParams;
+  return <ApplicationsPage initialView={view === "board" ? "board" : "list"} />;
 }

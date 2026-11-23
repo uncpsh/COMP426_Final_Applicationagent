@@ -1,14 +1,22 @@
 /**
  * The page of one recommender: their details, "Edit" and "Delete", and
- * every letter they owe across all of the user's applications.
+ * every letter they owe across all of the user's applications. It also has
+ * the two P1 extras: a reminder email draft and the portal link.
  *
  * This is a Client Component. Everything it shows comes from one tRPC query,
- * `recommenders.byId`.
+ * `recommenders.byId` (plus the user's own name, for the email signature).
  */
 
 "use client";
 
-import { ArrowLeft, Mail, Pencil, SearchX, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  MailPlus,
+  Pencil,
+  SearchX,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,6 +28,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { LetterItem } from "@/components/letters/letter-item";
 import { RecommenderFormDialog } from "@/components/recommenders/recommender-form-dialog";
+import { ShareLinkCard } from "@/components/recommenders/share-link-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,6 +38,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isLetterOutstanding, letterDueAt } from "@/utils/letters";
+import { reminderMailto } from "@/utils/reminder-email";
 import { api } from "@/utils/trpc/api";
 
 // The id in the URL is wrong or belongs to someone else. Asking again
@@ -57,6 +68,9 @@ export default function RecommenderPage({
         !MISSING_CODES.includes(failure.data?.code ?? "") && failureCount < 2,
     },
   );
+
+  // Already loaded by the user menu, so this is answered from the cache.
+  const { data: me } = api.profile.me.useQuery();
 
   const deleteRecommender = api.recommenders.delete.useMutation({
     onSuccess: async () => {
@@ -121,6 +135,16 @@ export default function RecommenderPage({
     .filter(Boolean)
     .join(" · ");
 
+  // The letters a reminder is about: the ones still owed. They arrive most
+  // urgent first, and the email lists them in that order.
+  const pendingLetters = letters
+    .filter((letter) => isLetterOutstanding(letter.status))
+    .map((letter) => ({
+      organization: letter.application.organization,
+      position: letter.application.position,
+      dueAt: letterDueAt(letter.dueAt, letter.application.deadlineAt),
+    }));
+
   return (
     <>
       <BackLink />
@@ -149,47 +173,75 @@ export default function RecommenderPage({
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-4 text-sm">
-              <Detail label="Email">
-                {recommender.email ? (
-                  <a
-                    href={`mailto:${recommender.email}`}
-                    className="inline-flex max-w-full items-center gap-1 underline underline-offset-4"
-                  >
-                    <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    <span className="truncate">{recommender.email}</span>
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground">Not added</span>
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-4 text-sm">
+                <Detail label="Email">
+                  {recommender.email ? (
+                    <a
+                      href={`mailto:${recommender.email}`}
+                      className="inline-flex max-w-full items-center gap-1 underline underline-offset-4"
+                    >
+                      <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{recommender.email}</span>
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Not added</span>
+                  )}
+                </Detail>
+                {recommender.relationship && (
+                  <Detail label="How you know them">
+                    {recommender.relationship}
+                  </Detail>
                 )}
-              </Detail>
-              {recommender.relationship && (
-                <Detail label="How you know them">
-                  {recommender.relationship}
-                </Detail>
-              )}
-              {recommender.notes && (
-                <Detail label="Notes">
-                  <p className="break-words whitespace-pre-wrap">
-                    {recommender.notes}
-                  </p>
-                </Detail>
-              )}
-            </dl>
-          </CardContent>
-        </Card>
+                {recommender.notes && (
+                  <Detail label="Notes">
+                    <p className="break-words whitespace-pre-wrap">
+                      {recommender.notes}
+                    </p>
+                  </Detail>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+          <ShareLinkCard recommender={recommender} />
+        </div>
 
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Letters</CardTitle>
-            <CardDescription>
-              Every letter {recommender.name} is writing, most urgent first.
-            </CardDescription>
+          <CardHeader className="flex-row flex-wrap items-start justify-between space-y-0 gap-x-4 gap-y-3">
+            <div className="grid gap-1.5">
+              <CardTitle>Letters</CardTitle>
+              <CardDescription>
+                Every letter {recommender.name} is writing, most urgent first.
+              </CardDescription>
+            </div>
+            {pendingLetters.length > 0 && (
+              <div className="grid gap-1">
+                {/* A link, not a request: it opens the user's mail program
+                    with the draft filled in. The app sends nothing. */}
+                <Button asChild variant="outline" size="sm">
+                  <a
+                    href={reminderMailto({
+                      recommenderName: recommender.name,
+                      recommenderEmail: recommender.email,
+                      senderName: me?.displayName,
+                      letters: pendingLetters,
+                    })}
+                  >
+                    <MailPlus aria-hidden /> Draft reminder email
+                  </a>
+                </Button>
+                {!recommender.email && (
+                  <p className="text-muted-foreground text-xs">
+                    No email on file: add the address in the draft.
+                  </p>
+                )}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {letters.length === 0 ? (

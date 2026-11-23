@@ -1,6 +1,7 @@
 /**
  * The "Documents" section of the application page: attach a version of a
- * document, download it, or detach it.
+ * document, download it, or detach it. When a newer version of an attached
+ * document exists, it says so and offers a one-click update (P1).
  *
  * The attached versions come from `applications.byId` (passed in as a prop);
  * every change goes through the `applicationDocuments` router and then
@@ -9,7 +10,13 @@
 
 "use client";
 
-import { Download, Loader2Icon, Plus, Unlink } from "lucide-react";
+import {
+  CircleArrowUp,
+  Download,
+  Loader2Icon,
+  Plus,
+  Unlink,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isDeadlineOpen } from "@/utils/deadlines";
 import { DOC_TYPE_LABELS } from "@/utils/labels";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 
@@ -72,6 +80,9 @@ export function DocumentsSection({ application }: DocumentsSectionProps) {
                 key={attached.versionId}
                 applicationId={application.id}
                 attached={attached}
+                // What was sent must stay on record, so the one-click update
+                // is offered only while the application has not gone out.
+                canUpdate={isDeadlineOpen(application.status)}
               />
             ))}
           </ul>
@@ -95,10 +106,13 @@ export function DocumentsSection({ application }: DocumentsSectionProps) {
 function AttachedVersionItem({
   applicationId,
   attached,
+  canUpdate,
 }: {
   applicationId: string;
   attached: AttachedVersion;
+  canUpdate: boolean;
 }) {
+  const apiUtils = api.useUtils();
   const invalidateAttachment = useInvalidateAttachment();
   const { download, downloadingId } = useDownloadVersion();
   const isDownloading = downloadingId === attached.versionId;
@@ -116,6 +130,39 @@ function AttachedVersionItem({
     },
   });
 
+  const latestNumber = attached.document.latestVersionNumber;
+  const hasNewer = latestNumber > attached.versionNumber;
+  const attach = api.applicationDocuments.attach.useMutation();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  async function updateToLatest() {
+    setIsUpdating(true);
+    try {
+      // This page knows the latest version only by its number. The
+      // document's own data has every version with its id.
+      const document = await apiUtils.documents.byId.fetch(
+        { id: attached.document.id },
+        { staleTime: 0 },
+      );
+      const [latest] = [...document.versions].sort(
+        (a, b) => b.versionNumber - a.versionNumber,
+      );
+      if (!latest) throw new Error("The document has no versions.");
+
+      // Attaching replaces the older version of the same document.
+      await attach.mutateAsync({
+        applicationId,
+        documentVersionId: latest.id,
+      });
+      await invalidateAttachment(applicationId, attached.document.id);
+      toast.success(`Now using version ${latest.versionNumber}`);
+    } catch {
+      toast.error("Could not update to the latest version. Try again.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-lg border p-3 text-sm">
       <div className="min-w-0 flex-1 basis-40">
@@ -130,7 +177,36 @@ function AttachedVersionItem({
         </p>
       </div>
 
-      <Badge variant="secondary">Version {attached.versionNumber}</Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary">Version {attached.versionNumber}</Badge>
+        {hasNewer &&
+          (canUpdate ? (
+            <>
+              <Badge className="border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                Version {latestNumber} available
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7"
+                aria-label={`Update ${attached.document.title} to version ${latestNumber}`}
+                disabled={isUpdating}
+                onClick={() => void updateToLatest()}
+              >
+                {isUpdating ? (
+                  <Loader2Icon className="animate-spin" aria-hidden />
+                ) : (
+                  <CircleArrowUp aria-hidden />
+                )}
+                Update
+              </Button>
+            </>
+          ) : (
+            <Badge variant="outline" className="text-muted-foreground">
+              Latest is version {latestNumber}
+            </Badge>
+          ))}
+      </div>
 
       <div className="flex items-center gap-1">
         <Button

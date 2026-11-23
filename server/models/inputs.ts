@@ -258,6 +258,25 @@ export const ApplicationDocumentLink = z.object({
 });
 
 /* ------------------------------------------------------------------ */
+/* dashboard                                                           */
+/* ------------------------------------------------------------------ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Defines the dates the calendar is showing: from `from` (included) up to
+ * `to` (not included). A month view covers six weeks at most.
+ */
+export const CalendarRange = z
+  .object({ from: z.coerce.date(), to: z.coerce.date() })
+  .refine(({ from, to }) => from < to, {
+    message: "The range must end after it starts.",
+  })
+  .refine(({ from, to }) => to.getTime() - from.getTime() <= 62 * DAY_MS, {
+    message: "The range can cover at most 62 days.",
+  });
+
+/* ------------------------------------------------------------------ */
 /* portal (public)                                                     */
 /* ------------------------------------------------------------------ */
 

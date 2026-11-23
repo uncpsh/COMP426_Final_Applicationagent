@@ -6,7 +6,7 @@ COMP 426 final project. AppTrail is one place for students to track grad school 
 - **Live app:** https://comp426-final-applicationagent.vercel.app
 - **Source of truth:** tables in `server/db/schema.ts`, relations in `server/db/relations.ts`, API inputs in `server/models/inputs.ts`, API outputs in `server/models/responses.ts`, routers in `server/api/routers/`.
 
-> **Status on 11/23.** The database below is created and live, and every procedure below exists with its final input and output validation. All P0 procedures are implemented. The three P1 procedures of the recommender portal (`recommenders.setSharing`, `portal.byToken`, `portal.markSubmitted`) still answer `NOT_IMPLEMENTED`.
+> **Status on 11/23.** The database below is created and live, and every procedure below is implemented and deployed, including the recommender portal (`recommenders.setSharing`, `portal.byToken`, `portal.markSubmitted`) and the calendar (`dashboard.calendar`).
 
 ---
 
@@ -437,6 +437,15 @@ type DashboardSummary = {
   totalFeesCents: number;
 };
 
+type CalendarEvent = {
+  type: "application" | "letter";
+  id: string;
+  applicationId: string;
+  title: string;
+  dueAt: string;
+  isOpen: boolean; // false once the application was sent or the letter was submitted
+};
+
 type PortalView = {
   recommenderName: string;
   applicantName: string;
@@ -454,7 +463,7 @@ Three columns never leave the server: `user_id`, `recommenders.share_token` (onl
 
 ### 2.3 Procedure overview
 
-29 procedures in 8 routers.
+30 procedures in 8 routers.
 
 | Procedure                     | Kind     | Access     | Purpose                                     |
 | ----------------------------- | -------- | ---------- | ------------------------------------------- |
@@ -485,6 +494,7 @@ Three columns never leave the server: `user_id`, `recommenders.share_token` (onl
 | `applicationDocuments.attach` | mutation | Auth       | Attach a version to an application          |
 | `applicationDocuments.detach` | mutation | Auth       | Detach a version                            |
 | `dashboard.summary`           | query    | Auth       | Everything the dashboard shows              |
+| `dashboard.calendar`          | query    | Auth       | Deadlines and letter due dates in a range   |
 | `portal.byToken`              | query    | **Public** | A recommender's requested letters           |
 | `portal.markSubmitted`        | mutation | **Public** | A recommender marks a letter as submitted   |
 
@@ -888,6 +898,8 @@ Output:
 
 Turns the recommender portal link on or off. `regenerateToken: true` replaces the secret, so an old link stops working.
 
+This is the only procedure that returns the link, because the link contains the secret. Calling it again with `enabled: true` returns the same link, which is how the page shows an existing link. The address at the start of the link is the one the request came to, so a link made on the Vercel deployment points at the Vercel deployment.
+
 Input:
 
 ```json
@@ -1248,14 +1260,14 @@ Output: `DashboardSummary`
       "type": "letter",
       "id": "c2a9d6f4-1b7e-4a38-b5d0-7e1f2a3b4c55",
       "applicationId": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
-      "title": "Letter from Dr. Maya Patel — Carnegie Mellon University",
+      "title": "Dr. Maya Patel · letter for Carnegie Mellon University",
       "dueAt": "2026-12-02T04:59:00.000Z"
     },
     {
       "type": "application",
       "id": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
       "applicationId": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
-      "title": "Carnegie Mellon University — MS in Computer Science",
+      "title": "Carnegie Mellon University · MS in Computer Science",
       "dueAt": "2026-12-11T04:59:00.000Z"
     }
   ],
@@ -1270,13 +1282,48 @@ Output: `DashboardSummary`
 }
 ```
 
+#### `dashboard.calendar` · query · Auth
+
+Every application deadline and letter due date from `from` (included) up to `to` (not included), sorted by date, for the calendar's month view. The range must end after it starts and cover at most 62 days, otherwise `BAD_REQUEST`.
+
+Unlike `upcoming`, this also returns what is already done, marked `isOpen: false`: an application that is no longer in `researching` or `preparing`, or a letter that is `submitted`. Declined letters are left out. A letter without its own due date uses the application's deadline.
+
+Input:
+
+```json
+{ "from": "2026-11-29T05:00:00.000Z", "to": "2027-01-03T05:00:00.000Z" }
+```
+
+Output: `CalendarEvent[]`
+
+```json
+[
+  {
+    "type": "letter",
+    "id": "c2a9d6f4-1b7e-4a38-b5d0-7e1f2a3b4c55",
+    "applicationId": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
+    "title": "Dr. Maya Patel · letter for Carnegie Mellon University",
+    "dueAt": "2026-12-02T04:59:00.000Z",
+    "isOpen": true
+  },
+  {
+    "type": "application",
+    "id": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
+    "applicationId": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
+    "title": "Carnegie Mellon University · MS in Computer Science",
+    "dueAt": "2026-12-11T04:59:00.000Z",
+    "isOpen": false
+  }
+]
+```
+
 ### 2.11 `portal` — Public (for recommenders, no login)
 
 A recommender has no account. The unguessable token in their link (`/r/<token>`) grants access, and only while the applicant has sharing turned on for that recommender.
 
 #### `portal.byToken` · query · **Public**
 
-`NOT_FOUND` if the token is unknown or sharing is off. Returns only letters in `requested`, `confirmed` or `submitted`.
+`NOT_FOUND` if the token is unknown or sharing is off; the two cases give the same answer, so the portal never confirms that a token was real. Returns only letters in `requested`, `confirmed` or `submitted`: the letters still to write come first, most urgent at the top, then the submitted ones. `dueAt` is the letter's own due date, or the application's deadline when it has none.
 
 Input:
 
@@ -1304,7 +1351,7 @@ Output: `PortalView`
 
 #### `portal.markSubmitted` · mutation · **Public**
 
-Marks one letter as submitted. The letter must belong to the recommender that the token identifies, otherwise `NOT_FOUND`.
+Marks one letter as submitted. The letter must belong to the recommender that the token identifies and be one the portal shows (`requested`, `confirmed` or `submitted`), and sharing must be on; otherwise `NOT_FOUND`. Marking a letter that is already submitted keeps its original `submittedAt`.
 
 Input:
 
