@@ -313,7 +313,10 @@ function VersionItem({
                   <span className="text-muted-foreground">
                     {application.position}
                   </span>
-                  <StatusBadge status={application.status} />
+                  <StatusBadge
+                    status={application.status}
+                    kind={application.kind}
+                  />
                 </li>
               ))}
             </ul>

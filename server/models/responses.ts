@@ -154,6 +154,8 @@ export const RecommenderDetail = Recommender.extend({
   letters: RecommendationRequest.extend({
     application: z.object({
       id: Id,
+      // Needed to label an offer correctly: "Admitted" or "Offer".
+      kind: Kind,
       organization: z.string(),
       position: z.string(),
       deadlineAt: Timestamp.nullable(),
@@ -211,6 +213,8 @@ export const DocDetail = Doc.extend({
     applications: z
       .object({
         id: Id,
+        // Needed to label an offer correctly: "Admitted" or "Offer".
+        kind: Kind,
         organization: z.string(),
         position: z.string(),
         status: Status,

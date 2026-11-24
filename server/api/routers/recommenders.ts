@@ -108,6 +108,7 @@ export const recommendersApiRouter = createTRPCRouter({
               application: {
                 columns: {
                   id: true,
+                  kind: true,
                   organization: true,
                   position: true,
                   deadlineAt: true,

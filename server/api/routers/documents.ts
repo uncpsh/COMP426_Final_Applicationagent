@@ -101,6 +101,7 @@ export const documentsApiRouter = createTRPCRouter({
               applications: {
                 columns: {
                   id: true,
+                  kind: true,
                   organization: true,
                   position: true,
                   status: true,
