@@ -273,7 +273,10 @@ export default function RecommenderPage({
                     <p className="text-muted-foreground mb-1 truncate text-xs">
                       {letter.application.position}
                     </p>
-                    <StatusBadge status={letter.application.status} />
+                    <StatusBadge
+                      status={letter.application.status}
+                      kind={letter.application.kind}
+                    />
                   </LetterItem>
                 ))}
               </ul>

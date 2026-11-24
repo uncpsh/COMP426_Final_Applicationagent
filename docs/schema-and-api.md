@@ -365,6 +365,7 @@ type RecommenderDetail = Recommender & {
   letters: (RecommendationRequest & {
     application: {
       id: string;
+      kind: Kind;
       organization: string;
       position: string;
       deadlineAt: string | null;
@@ -413,6 +414,7 @@ type DocDetail = Doc & {
   versions: (DocVersion & {
     applications: {
       id: string;
+      kind: Kind;
       organization: string;
       position: string;
       status: Status;
@@ -820,6 +822,7 @@ Output: `RecommenderDetail`
       "notes": "Sent CV and draft SOP.",
       "application": {
         "id": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
+        "kind": "grad_school",
         "organization": "Carnegie Mellon University",
         "position": "MS in Computer Science",
         "deadlineAt": "2026-12-11T04:59:00.000Z",
@@ -1065,6 +1068,7 @@ Output: `DocDetail` (versions newest first)
       "applications": [
         {
           "id": "5b0a4a7e-9d3c-4f0e-8a61-2f4c8f0d1e22",
+          "kind": "grad_school",
           "organization": "Carnegie Mellon University",
           "position": "MS in Computer Science",
           "status": "preparing"

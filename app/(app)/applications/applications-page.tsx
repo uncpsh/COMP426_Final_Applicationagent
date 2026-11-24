@@ -376,7 +376,8 @@ function Counts({ application }: { application: Application }) {
       {letters.total > 0 && (
         <span className="inline-flex items-center gap-1">
           <Mail className="h-3.5 w-3.5" aria-hidden />
-          {letters.submitted} of {letters.total} letters in
+          {letters.submitted} of {letters.total}{" "}
+          {letters.total === 1 ? "letter" : "letters"} in
         </span>
       )}
       {documentCount > 0 && (
